@@ -1,9 +1,32 @@
+
+#!/usr/bin/env python
+'''
+The MIT License (MIT)
+Copyright (c) 2017  Jukka-Pekka Sarjanen
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+'''
 import communication as cm
+import config as cfg
 import time
 import Queue
 import signal
 import sys
 import paho.mqtt.client
+import logging
 
 def signal_handler(signal, frame):
         print('You pressed Ctrl+C!')
@@ -12,13 +35,15 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 class Monitor():
-    def __init__(self,cfg):
+    def __init__(self,cfgFile):
+        self.logger = logging.getLogger('mqtt-rs-gtw')
+        self.cfgHandler = cfg.ConfigHandler(cfgFile)
+        self.cfg = self.cfgHandler.getMqttConfig()
         self.queue      = Queue.Queue( maxsize=20 )# Just prevent's increase infinity... 
-        self.port       = cm.ArduinoIf( cfg, self)
+        self.port       = cm.ArduinoIf( self.cfgHandler.getSerialCfg(), self)
         self.alive      = True
         self.mqttClient = paho.mqtt.client.Client()
         self.mqttClient.on_connect = self.on_connect
-        self.cfg = cfg
         self.state ='uc'
         self.port.start()
 
@@ -38,7 +63,7 @@ class Monitor():
         while(self.alive):
             if self.state == 'uc':
                 print self.cfg
-                self.mqttClient.connect(self.cfg['host'], port=self.cfg['Serverport'])
+                self.mqttClient.connect(self.cfg['host'], port=self.cfg['serverport'])
                 print 'dss'
             try:
                 data = self.queue.get(block=False)
@@ -61,18 +86,10 @@ class Monitor():
         
     def publish(self,l):
         if len(l)>= 3:
-           if l[0]=='D': 
-               self.mqttClient.publish("jukkis/hum",l[1])
-               self.mqttClient.publish("jukkis/temp",l[2])
-               self.mqttClient.publish("jukkis/press",l[3])
-def main(  ):
-    global monitor
-    cfg={'port':'/dev/ttyACM0','speed':'9600','Serverport':'1883','host':'localhost'}
-    monitor = Monitor(cfg)
-    monitor.runMe() 
-    
-if __name__ == '__main__':
-    main()
+            if l[0]=='D': 
+                self.mqttClient.publish("jukkis/hum",l[1])
+                self.mqttClient.publish("jukkis/temp",l[2])
+                self.mqttClient.publish("jukkis/press",l[3])
 
 
 
