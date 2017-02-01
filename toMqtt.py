@@ -23,16 +23,8 @@ import communication as cm
 import config as cfg
 import time
 import Queue
-import signal
-import sys
 import paho.mqtt.client
 import logging
-
-def signal_handler(signal, frame):
-        print('You pressed Ctrl+C!')
-        monitor.alive=False
-
-signal.signal(signal.SIGINT, signal_handler)
 
 class Monitor():
     def __init__(self,cfgFile):

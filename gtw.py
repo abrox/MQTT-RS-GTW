@@ -20,8 +20,18 @@ THE SOFTWARE.
 '''
 import argparse
 import logging
+import signal
+import sys
+
 from toMqtt import Monitor as bm 
-    
+
+def signal_handler(signal, frame):
+        global monitor
+        print('You pressed Ctrl+C!')
+        monitor.alive=False
+
+signal.signal(signal.SIGINT, signal_handler)
+
 def handleCmdLineArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument('--file','-f',help='Configuration file path',required=True)
@@ -43,9 +53,10 @@ def createLogger():
     logger.addHandler(ch)
     
 def main( args ):
+    global monitor
     createLogger()
-    m = bm(args.file)
-    m.runMe() 
+    monitor = bm(args.file)
+    monitor.runMe() 
     
 if __name__ == '__main__':
     main(handleCmdLineArgs())
