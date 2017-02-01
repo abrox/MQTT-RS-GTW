@@ -21,7 +21,7 @@ THE SOFTWARE.
 import serial
 import threading
 import time
-
+import logging
 
 NOT_CONNECTED = 1
 CONNECTED     = 2
@@ -38,6 +38,7 @@ class ArduinoIf (threading.Thread):
         self.portState = None
         self.ser       = None
         self.alive     = True
+        self.logger    = logging.getLogger('mqtt-rs-gtw')
         
         self.createAndSetPortState(cfg)
 
@@ -50,47 +51,51 @@ class ArduinoIf (threading.Thread):
                                   timeout=2.5)
             port.setDTR(False)
             self.portState = CONNECTED
+            self.logger.info(cfg['port']+" is open")
+            
         except serial.SerialException,e:
             self.portState = NOT_CREATED
-            print('Serial Exp: '+ str(e)) 
- 
+            self.logger.error('Serial Exp: '+ str(e)) 
+            
     def run(self):
         while self.alive:
             try:
                 if( self.portState is CONNECTED ):
                     msg = self.ser.readline()
-                    #print msg
                     if '\n' in msg:
                         msg = msg.rstrip('\r\n')
                         #If we are not able to handle incomming messages -> it's time to die...
                     if( self.alive):
                         self.alive = self.cb.putQ(msg)
+                        
                 elif( self.portState is NOT_CONNECTED ):
                     if( self.ser.isOpen() ):
                         self.ser.close() 
                     else:
-                        print('Trying open port')     
+                        self.logger.debug(self.cfg['port']+'Trying open port')     
                         self.ser.open()#If cable is missing this will throw
                         self.ser.flushInput()
-                        print('Port Open') 
+                        self.logger.info(self.cfg['port']+" is open") 
                         self.portState = CONNECTED
+                        
                 elif( self.portState is NOT_CREATED ):
                     self.createAndSetPortState(self.cfg)
-                    print self.alive
                     if not self.ser:
-                         time.sleep(2) 
+                        time.sleep(2)
+                         
             except serial.SerialException,e:
-                print('Serial Exp: '+ str(e)) 
+                self.logger.error('Serial Exp: '+ str(e)) 
                 time.sleep(2)
                 self.portState = NOT_CONNECTED
-                print('Serial Thread say bye bye')
+                
+        self.logger.debug(self.cfg['port']+'Serial thread going to die, bye !')
         
     def send(self,data):
         try:
             if self.portState is CONNECTED:
                 print self.ser.write(data)
         except serial.SerialException,e:
-            print('Writefails'+ str(e))
+            self.logger.error('Serial Exp: '+ str(e)) 
             self.portState = NOT_CONNECTED
            
     def __del__(self):
