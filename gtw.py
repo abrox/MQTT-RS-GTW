@@ -19,9 +19,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 '''
 import argparse
-import logging
+import logging.handlers
 import signal
-import sys
 
 from toMqtt import Monitor as bm 
 
@@ -35,16 +34,24 @@ signal.signal(signal.SIGINT, signal_handler)
 def handleCmdLineArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument('--file','-f',help='Configuration file path',required=True)
-    parser.add_argument('--debug','-d',help='activate debug messages', action='store_true')
+    parser.add_argument('--log','-l',help='Sets log level',  choices=[ 'INFO','DEBUG' 'WARN','ERR','CRITICAL'],default='ERR')
+    parser.add_argument('--log_target','-lt',help='Sets log target ',  choices=[ 'SYSLOG','STDOUT'],default='STDOUT')
     return parser.parse_args()
 
-def createLogger():
+def createLogger(args):
     # create logger
     logger = logging.getLogger('mqtt-rs-gtw')
-    logger.setLevel(logging.DEBUG)
-    # create console handler and set level to debug
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    level = { 'INFO':logging.INFO, 'DEBUG':logging.DEBUG, 'WARN':logging.WARN, 'ERR':logging.ERROR,'CRITICAL':logging.CRITICAL}
+    logger.setLevel(level[args.log])
+    
+    #set log destination 
+    ch=None
+    if args.log_target == 'SYSLOG':
+        ch = logging.handlers.SysLogHandler(address = '/dev/log')
+    elif args.log_target == 'STDOUT':
+        ch = logging.StreamHandler()
+
+    ch.setLevel(level[args.log])
     # create formatter
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     # add formatter to ch
@@ -54,7 +61,7 @@ def createLogger():
     
 def main( args ):
     global monitor
-    createLogger()
+    createLogger(args)
     monitor = bm(args.file)
     monitor.runMe() 
     
