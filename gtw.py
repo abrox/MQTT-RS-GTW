@@ -62,7 +62,7 @@ def createLogger(args):
 def main( args ):
     global monitor
     createLogger(args)
-    monitor = bm(args.file)
+    monitor = bm(args)
     monitor.runMe() 
     
 if __name__ == '__main__':

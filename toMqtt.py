@@ -27,9 +27,9 @@ import paho.mqtt.client
 import logging
 
 class Monitor():
-    def __init__(self,cfgFile):
+    def __init__(self,args):
         self.logger = logging.getLogger('mqtt-rs-gtw')
-        self.cfgHandler = cfg.ConfigHandler(cfgFile)
+        self.cfgHandler = cfg.ConfigHandler(args.file)
         self.cfg = self.cfgHandler.getMqttConfig()
         self.queue      = Queue.Queue( maxsize=20 )# Just prevent's increase infinity... 
         self.port       = cm.ArduinoIf( self.cfgHandler.getSerialCfg(), self)
