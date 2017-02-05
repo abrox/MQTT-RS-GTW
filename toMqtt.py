@@ -21,7 +21,6 @@ THE SOFTWARE.
 '''
 import communication as cm
 import config as cfg
-import time
 import Queue
 import paho.mqtt.client
 import logging
@@ -36,6 +35,7 @@ class Monitor():
         self.alive      = True
         self.mqttClient = paho.mqtt.client.Client()
         self.mqttClient.on_connect = self.on_connect
+        self.mqttClient.on_disconnect = self.on_disconnect
         self.state ='uc'
         self.port.start()
 
@@ -46,44 +46,48 @@ class Monitor():
         try:
             self.queue.put(msg,False)
         except Queue.Full,e:
-            print('Queue overflow: '+ str(e))
+            self.logger.error('Queue overflow: '+ str(e))
             self.alive = False #No reason to continue 
             rc= False
         return rc
     
     def runMe(self):
+        self.logger.info("Mqtt loop starting.." + str(self.cfg))
+        self.mqttClient.loop_start()
+        self.mqttClient.connect_async(self.cfg['host'], port=self.cfg['serverport'],keepalive=30)
+
         while(self.alive):
-            if self.state == 'uc':
-                print self.cfg
-                self.mqttClient.connect(self.cfg['host'], port=self.cfg['serverport'])
-                print 'dss'
             try:
-                data = self.queue.get(block=False)
+                data = self.queue.get()
                 l = data.split('|')
-                print l
-                if self.state == 'co':
-                    self.publish(l)
+                self.logger.debug(l)
+                self.publish(l)
                 
             except Queue.Empty:
-                print "empty"
+                pass
                 
-            self.mqttClient.loop()
-        print('Main Thread say bye bye')
+        self.mqttClient.loop_stop()
+        self.logger.debug('Main Thread say bye bye')
+
         self.port.alive = False
         self.port.join()
 
     def on_connect(self,client, userdata, flags, rc):
-        print ("Connected")
+        self.logger.info("Connected")
         self.state ='co'
-        
+
+    def on_disconnect(self,client, userdata, rc):
+        self.logger.info("Disconnect rc:"+str(rc))
+        self.state ='uc'
+
     def publish(self,l):
-        if len(l)>= 3:
+        if len(l)>= 4:
             if l[0]=='D': 
                 self.mqttClient.publish("jukkis/hum",l[1])
                 self.mqttClient.publish("jukkis/temp",l[2])
                 self.mqttClient.publish("jukkis/press",l[3])
-
-
+        else:
+            self.logger.debug("Short msg!:"+str(l))   
 
 
 
