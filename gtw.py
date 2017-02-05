@@ -34,7 +34,7 @@ signal.signal(signal.SIGINT, signal_handler)
 def handleCmdLineArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument('--file','-f',help='Configuration file path',required=True)
-    parser.add_argument('--log','-l',help='Sets log level',  choices=[ 'INFO','DEBUG' 'WARN','ERR','CRITICAL'],default='ERR')
+    parser.add_argument('--log','-l',help='Sets log level',  choices=[ 'INFO','DEBUG', 'WARN','ERR','CRITICAL'],default='ERR')
     parser.add_argument('--log_target','-lt',help='Sets log target ',  choices=[ 'SYSLOG','STDOUT'],default='STDOUT')
     return parser.parse_args()
 
