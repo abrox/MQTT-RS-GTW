@@ -27,19 +27,29 @@ import logging
 
 class Monitor():
     def __init__(self,args):
+        self.state ='uc'
+        self.alive = True
+        self.queue = Queue.Queue( maxsize=20 )# Just prevent's increase infinity...
+
         self.logger = logging.getLogger('mqtt-rs-gtw')
-        self.cfgHandler = cfg.ConfigHandler(args.file)
-        self.cfg = self.cfgHandler.getMqttConfig()
-        self.queue      = Queue.Queue( maxsize=20 )# Just prevent's increase infinity... 
-        self.port       = cm.ArduinoIf( self.cfgHandler.getSerialCfg(), self)
-        self.alive      = True
+        cfgHandler = cfg.ConfigHandler(args.file)
+
+        self.port = cm.ArduinoIf( cfgHandler.getSerialCfg(), self)
+
+        #Setup Mqtt client and items to publishToBroker
+        serverCfg = cfgHandler.getMqttConfig()
         self.mqttClient = paho.mqtt.client.Client()
         self.mqttClient.on_connect = self.on_connect
         self.mqttClient.on_disconnect = self.on_disconnect
-        self.state ='uc'
+        self.MqttItems = cfgHandler.getPublishItems()
+
+        #COnnect to server an open serial port
+        self.logger.info("Mqtt loop starting.." + str(serverCfg))
+        self.mqttClient.loop_start()
+        self.mqttClient.connect_async(serverCfg['host'], port=serverCfg['serverport'],keepalive=30)
+
         self.port.start()
 
-       
     def putQ(self, msg):
         '''Callback function handling incoming messages'''
         rc=self.alive
@@ -52,17 +62,12 @@ class Monitor():
         return rc
     
     def runMe(self):
-        self.logger.info("Mqtt loop starting.." + str(self.cfg))
-        self.mqttClient.loop_start()
-        self.mqttClient.connect_async(self.cfg['host'], port=self.cfg['serverport'],keepalive=30)
 
         while(self.alive):
             try:
                 data = self.queue.get()
-                l = data.split('|')
-                self.logger.debug(l)
-                self.publish(l)
-                
+                self.logger.debug(data)
+                self.publishToBroker(data)
             except Queue.Empty:
                 pass
                 
@@ -77,17 +82,27 @@ class Monitor():
         self.state ='co'
 
     def on_disconnect(self,client, userdata, rc):
-        self.logger.info("Disconnect rc:"+str(rc))
+        self.logger.warning("Disconnect rc:"+str(rc))
         self.state ='uc'
 
-    def publish(self,l):
-        if len(l)>= 4:
-            if l[0]=='D': 
-                self.mqttClient.publish("jukkis/hum",l[1])
-                self.mqttClient.publish("jukkis/temp",l[2])
-                self.mqttClient.publish("jukkis/press",l[3])
-        else:
-            self.logger.debug("Short msg!:"+str(l))   
+    def publishToBroker(self,data):
+        self.logger.debug('msgin:'+data)
+        try:
+            msgStart  = data[:1]
+            DataDef   = self.MqttItems[msgStart]
+            separator = DataDef['separator']
+            topics    = DataDef['topics']
 
+            msgData = data.split(separator)
+            msgData = msgData[1:] #Remove msg start byte from data
+
+            if(len(msgData) == len(topics)):
+                for t,d in zip(topics.values(),msgData):
+                    self.mqttClient.publishToBroker(t,d)
+                    self.logger.debug('publishToBroker:'+t+'data:'+d)
+            else:
+                self.logger.error('invalid msg content'+str(msgData))
+        except KeyError, e:
+            self.logger.error('Invalid msg strart byte:'+ str(e))
 
 

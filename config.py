@@ -22,11 +22,16 @@ from ConfigParser import SafeConfigParser
 import logging
 import sys
 
+class ConfigError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 class ConfigHandler():
     def __init__(self,cfgFile):
         self.logger = logging.getLogger('mqtt-rs-gtw')
-        self.parser = SafeConfigParser()
+        self.parser = SafeConfigParser(defaults={'separator':'|','mqtt_server_port':'1883','mqtt_server':'localhost'})
         files       = self.parser.read(cfgFile)
 
         if( len(files)== 0 ):
@@ -38,9 +43,31 @@ class ConfigHandler():
         for name, value in self.parser.items(section):
             cfg[name] = value
         return cfg
-      
+
     def getSerialCfg(self):
         return self.__getCfg('SERIAL')
 
     def getMqttConfig(self):
-        return self.__getCfg('MQTT') 
+        return self.__getCfg('MQTT')
+
+    def getPublishItems(self):
+        '''Extract outgoing mqtt message definations from config file'''
+        theItems={}
+        for section_name in self.parser.sections():
+            if 'MQTT_TO_BROKER' in section_name:
+                msgstart  = self.parser.get(section_name,'msgstart')
+                separator = self.parser.get(section_name,'separator')
+
+                d={}
+                for key,val in self.parser.items(section_name):
+                    try:
+                        d[int(key)] = val #store only stuff that have numeric key, aka position in message
+                    except ValueError:
+                        pass
+
+                theItem={'separator':separator,'topics':d}
+                if not  msgstart in theItems:
+                    theItems[msgstart] = theItem
+                else:
+                    raise ConfigError('Duplicate msg defination!'+ msgstart)
+        return theItems
