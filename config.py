@@ -21,6 +21,7 @@ THE SOFTWARE.
 from ConfigParser import SafeConfigParser
 import logging
 import sys
+import defs
 
 class ConfigError(Exception):
     def __init__(self, value):
@@ -31,7 +32,10 @@ class ConfigError(Exception):
 class ConfigHandler():
     def __init__(self,cfgFile):
         self.logger = logging.getLogger('mqtt-rs-gtw')
-        self.parser = SafeConfigParser(defaults={'separator':'|','mqtt_server_port':'1883','mqtt_server':'localhost'})
+        self.parser = SafeConfigParser(defaults={defs.KEY_SEPARATOR:'|',
+                                                 defs.KEY_MQTT_SERVERPORT:'1883',
+                                                 defs.KEY_MQTT_SERVER:'localhost'}
+                                       )
         files       = self.parser.read(cfgFile)
 
         if( len(files)== 0 ):
@@ -55,8 +59,8 @@ class ConfigHandler():
         theItems={}
         for section_name in self.parser.sections():
             if 'MQTT_TO_BROKER' in section_name:
-                msgstart  = self.parser.get(section_name,'msgstart')
-                separator = self.parser.get(section_name,'separator')
+                msgstart  = self.parser.get(section_name,defs.KEY_MSGSTART)
+                separator = self.parser.get(section_name,defs.KEY_SEPARATOR)
 
                 d={}
                 for key,val in self.parser.items(section_name):
@@ -65,7 +69,7 @@ class ConfigHandler():
                     except ValueError:
                         pass
 
-                theItem={'separator':separator,'topics':d}
+                theItem={defs.KEY_SEPARATOR:separator,'topics':d}
                 if not  msgstart in theItems:
                     theItems[msgstart] = theItem
                 else:

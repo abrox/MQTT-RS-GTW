@@ -24,6 +24,7 @@ import config as cfg
 import Queue
 import paho.mqtt.client
 import logging
+import defs
 
 class Monitor():
     def __init__(self,args):
@@ -46,7 +47,9 @@ class Monitor():
         #COnnect to server an open serial port
         self.logger.info("Mqtt loop starting.." + str(serverCfg))
         self.mqttClient.loop_start()
-        self.mqttClient.connect_async(serverCfg['host'], port=serverCfg['serverport'],keepalive=30)
+        self.mqttClient.connect_async(serverCfg[defs.KEY_MQTT_SERVER], 
+                                      port=serverCfg[defs.KEY_MQTT_SERVERPORT],
+                                      keepalive=30)
 
         self.port.start()
 
@@ -66,7 +69,6 @@ class Monitor():
         while(self.alive):
             try:
                 data = self.queue.get()
-                self.logger.debug(data)
                 self.publishToBroker(data)
             except Queue.Empty:
                 pass
@@ -90,7 +92,7 @@ class Monitor():
         try:
             msgStart  = data[:1]
             DataDef   = self.MqttItems[msgStart]
-            separator = DataDef['separator']
+            separator = DataDef[defs.KEY_SEPARATOR]
             topics    = DataDef['topics']
 
             msgData = data.split(separator)
@@ -98,7 +100,7 @@ class Monitor():
 
             if(len(msgData) == len(topics)):
                 for t,d in zip(topics.values(),msgData):
-                    self.mqttClient.publishToBroker(t,d)
+                    self.mqttClient.publish(t,d)
                     self.logger.debug('publishToBroker:'+t+'data:'+d)
             else:
                 self.logger.error('invalid msg content'+str(msgData))
