@@ -1,0 +1,16 @@
+[Unit]
+Description=Mqtt serialport gtw service
+After=syslog.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/src/MQTT-RS-GTW
+#Assuming that config file is in same directory that gtw.py
+ExecStart=/home/pi/src/MQTT-RS-GTW/gtw.py -lt SYSLOG -f mqtt-rs-gtw.conf
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
