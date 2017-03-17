@@ -35,7 +35,31 @@ D|20.1|30.8|990\n
  
 
 ##Usage
+- Help and available options:
+```
+./gtw.py -h
+usage: gtw.py [-h] --file FILE [--log {INFO,DEBUG,WARN,ERR,CRITICAL}]
+              [--log_target {SYSLOG,STDOUT}]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --file FILE, -f FILE  Configuration file path
+  --log {INFO,DEBUG,WARN,ERR,CRITICAL}, -l {INFO,DEBUG,WARN,ERR,CRITICAL}
+                        Sets log level
+  --log_target {SYSLOG,STDOUT}, -lt {SYSLOG,STDOUT}
+                        Sets log target
+```
+- Run directly from commandline 
 ```
 ./gtw.py -f myConfig.cfg
 
 ```
+- Using as systemD service:
+Check from *mqqt-rs-gtw.service* file   that your **WorkingDirectory** and **ExecStart ** are pointing  correct place. and do following:
+```
+sudo cp mqqt-rs-gtw.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable mqqt-rs-gtw.service
+sudo systemctl start mqqt-rs-gtw.service
+```
+
