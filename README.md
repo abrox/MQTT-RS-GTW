@@ -1,15 +1,19 @@
 # MQTT-RS-GTW
-Simple mqtt gateway passing messages from serialline to mqtt broker and from broker to serialline:
+
+Simple mqtt gateway passing messages from serialline to mqtt broker and from broker to serialline.
 
 ##Implemented Features
+
 - Configurable logging levels
 - Configurable logging target ( Console, Syslog )
 - Configurable topic names
 - MQTT Publish with Qos 0
+
 ##Missing Features
 -  
 
 ##Example HW setup
+
 ```
                                           _____________________________________      
  Pressure     _______________            |           RASPBERRYPI              |
@@ -24,6 +28,7 @@ Humidity/Temp|               |           |______|   |_________|   |________|  |
 
 ```
 ##Protocol
+
 Simple ASCII protocol where messages start with specific msgstart character. 
 Message fields are separeted with specific separator character.
 Message ends with \n leading \r is accepted also following example:
@@ -35,6 +40,7 @@ D|20.1|30.8|990\n
  
 
 ##Usage
+
 - Help and available options:
 ```
 ./gtw.py -h
@@ -54,8 +60,9 @@ optional arguments:
 ./gtw.py -f myConfig.cfg
 
 ```
-- Using as systemD service:
-Check from *mqqt-rs-gtw.service* file   that your **WorkingDirectory** and **ExecStart ** are pointing  correct place. and do following:
+- Use as systemD service:
+Check from *mqqt-rs-gtw.service* file   that your **WorkingDirectory** and **ExecStart ** are pointing  correct place. 
+And do following:
 ```
 sudo cp mqqt-rs-gtw.service /etc/systemd/system/
 sudo systemctl daemon-reload
