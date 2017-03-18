@@ -2,17 +2,17 @@
 
 Simple mqtt gateway passing messages from serialline to mqtt broker and from broker to serialline.
 
-##Implemented Features
+## Implemented Features
 
 - Configurable logging levels
 - Configurable logging target ( Console, Syslog )
 - Configurable topic names
 - MQTT Publish with Qos 0
 
-##Missing Features
+## Missing Features
 -  
 
-##Example HW setup
+## Example HW setup
 
 ```
                                           _____________________________________      
@@ -27,7 +27,7 @@ Humidity/Temp|               |           |______|   |_________|   |________|  |
 |_____|      |_______________|           |____________________________________|
 
 ```
-##Protocol
+## Protocol
 
 Simple ASCII protocol where messages start with specific msgstart character. 
 Message fields are separeted with specific separator character.
@@ -39,7 +39,7 @@ D|20.1|30.8|990\n
  - | is separator character
  
 
-##Usage
+## Usage
 
 - Help and available options:
 ```
