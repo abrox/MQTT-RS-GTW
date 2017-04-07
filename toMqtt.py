@@ -69,7 +69,8 @@ class Monitor():
         while(self.alive):
             try:
                 data = self.queue.get()
-                self.publishToBroker(data)
+                if(len(data)):
+                    self.publishToBroker(data)
             except Queue.Empty:
                 pass
                 
