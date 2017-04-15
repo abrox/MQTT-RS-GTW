@@ -26,4 +26,6 @@ KEY_SEPARATOR        = 'separator'
 KEY_MSGSTART         = 'msgStart'
 KEY_MQTT_SERVERPORT = 'mqtt_serverport'
 KEY_MQTT_SERVER      = 'mqtt_server'
-
+KEY_TOPIC            ='topic'
+KEY_MQTT_DATA_MAX_LEN= 'data_max_len'
+KEY_MQTT_QOS         = 'qos'

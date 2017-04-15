@@ -34,7 +34,8 @@ class ConfigHandler():
         self.logger = logging.getLogger('mqtt-rs-gtw')
         self.parser = SafeConfigParser(defaults={defs.KEY_SEPARATOR:'|',
                                                  defs.KEY_MQTT_SERVERPORT:'1883',
-                                                 defs.KEY_MQTT_SERVER:'localhost'}
+                                                 defs.KEY_MQTT_SERVER:'localhost',
+                                                 defs.KEY_MQTT_QOS:'0'}
                                        )
         files       = self.parser.read(cfgFile)
 
@@ -54,7 +55,7 @@ class ConfigHandler():
     def getMqttConfig(self):
         return self.__getCfg('MQTT')
 
-    def getPublishItems(self):
+    def getMqttPubItems(self):
         '''Extract outgoing mqtt message definations from config file'''
         theItems={}
         for section_name in self.parser.sections():
@@ -74,4 +75,29 @@ class ConfigHandler():
                     theItems[msgstart] = theItem
                 else:
                     raise ConfigError('Duplicate msg defination!'+ msgstart)
+        return theItems
+
+    def getMqttSubItems(self):
+        '''Extract incomming mqtt message definations from config file'''
+        theItems={}
+        for section_name in self.parser.sections():
+            if 'MQTT_FROM_BROKER' in section_name:
+                msgstart  = self.parser.get(section_name,defs.KEY_MSGSTART)
+                topic     = self.parser.get(section_name,defs.KEY_TOPIC)
+                maxLen    = self.parser.get(section_name,defs.KEY_MQTT_DATA_MAX_LEN)
+                qos       = self.parser.get(section_name,defs.KEY_MQTT_QOS)
+                #In case we have more than one subscribe items they should have 
+                #different message start byte on serial.
+                for val in theItems.values():
+                    if val[defs.KEY_MSGSTART] == msgstart:
+                        raise ConfigError('Duplicate msg start!'+ msgstart)
+
+                theItem={defs.KEY_MSGSTART:msgstart,
+                         defs.KEY_MQTT_DATA_MAX_LEN:maxLen,
+                         defs.KEY_MQTT_QOS:qos}
+
+                if not  topic in theItems:
+                    theItems[topic] = theItem
+                else:
+                    raise ConfigError('Duplicate  mqtt topic defination!'+ topic)
         return theItems

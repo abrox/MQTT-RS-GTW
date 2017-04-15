@@ -10,7 +10,7 @@ Simple mqtt gateway passing messages from serialline to mqtt broker and from bro
 - MQTT Publish with Qos 0
 
 ## Missing Features
--  
+- Qos 1 and 2
 
 ## Example HW setup
 

@@ -64,9 +64,9 @@ class ArduinoIf (threading.Thread):
                     msg = self.ser.readline()
                     if '\n' in msg:
                         msg = msg.rstrip('\r\n')
-                        #If we are not able to handle incomming messages -> it's time to die...
-                    if( self.alive):
-                        self.alive = self.cb.putQ(msg)
+                    if( self.alive and len(msg)):
+                        self.logger.debug(msg) 
+                        self.alive = self.cb.putQ(msg) #If we are not able to handle incomming messages -> it's time to die...
                         
                 elif( self.portState is NOT_CONNECTED ):
                     if( self.ser.isOpen() ):
